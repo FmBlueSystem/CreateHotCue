@@ -7,7 +7,7 @@ Optimized for macOS with memory-efficient streaming
 import logging
 import time
 from pathlib import Path
-from typing import Dict, Any, Optional, Tuple, Union
+from typing import Dict, Any, Optional, Tuple, Union, List
 from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
 import threading
