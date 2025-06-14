@@ -151,10 +151,21 @@ def main() -> int:
     try:
         main_window = MainWindow(config)
         main_window.show()
-        
+
+        # Setup cleanup on exit
+        def cleanup_on_exit():
+            """Clean up resources on application exit."""
+            try:
+                main_window.audio_engine.cleanup()
+                logger.info("Application cleanup completed")
+            except Exception as e:
+                logger.error(f"Cleanup error: {e}")
+
+        app.aboutToQuit.connect(cleanup_on_exit)
+
         logger.info("Application started successfully")
         return app.exec()
-        
+
     except Exception as e:
         logger.error(f"Failed to start application: {e}")
         return 1

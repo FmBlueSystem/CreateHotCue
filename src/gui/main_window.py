@@ -26,6 +26,7 @@ from ..core.metadata_parser import MetadataParser, TrackMetadata
 from ..core.serato_bridge import SeratoBridge
 from ..analysis.structure_analyzer import StructureAnalyzer, StructureAnalysisResult
 from .navigation_controls import NavigationControls
+from ..playback.audio_engine import AudioEngine, PlaybackState
 
 
 class MainWindow(QMainWindow):
@@ -56,6 +57,9 @@ class MainWindow(QMainWindow):
 
         # Initialize Phase 3 components
         self.structure_analyzer = StructureAnalyzer(config)
+
+        # Initialize Audio Playback (Critical)
+        self.audio_engine = AudioEngine(config)
 
         # Current audio and analysis data
         self.current_audio_data: Optional[AudioData] = None
@@ -242,6 +246,7 @@ class MainWindow(QMainWindow):
         
         # Create transport bar
         self.transport_bar = TransportBar(self.config, self)
+        self.transport_bar.set_audio_engine(self.audio_engine)
         main_layout.addWidget(self.transport_bar)
     
     def _create_status_bar(self) -> None:
@@ -264,10 +269,26 @@ class MainWindow(QMainWindow):
         """Connect internal signals."""
         # Connect file loaded signal
         self.file_loaded.connect(self._on_file_loaded)
-        
+
         # Connect waveform view signals
         if hasattr(self.waveform_view, 'zoom_changed'):
             self.waveform_view.zoom_changed.connect(self._on_zoom_changed)
+        if hasattr(self.waveform_view, 'position_clicked'):
+            self.waveform_view.position_clicked.connect(self._jump_to_position)
+        if hasattr(self.waveform_view, 'cue_requested'):
+            self.waveform_view.cue_requested.connect(self._set_cue_point)
+
+        # Connect transport bar signals
+        self.transport_bar.play_requested.connect(self._play_audio)
+        self.transport_bar.pause_requested.connect(self._pause_audio)
+        self.transport_bar.stop_requested.connect(self._stop_audio)
+        self.transport_bar.seek_requested.connect(self._seek_audio)
+        self.transport_bar.volume_changed.connect(self._set_volume)
+        self.transport_bar.speed_changed.connect(self._set_speed)
+        self.transport_bar.device_changed.connect(self._set_audio_device)
+
+        # Connect audio engine signals
+        self.audio_engine.position_changed.connect(self._on_playback_position_changed)
     
     def _setup_performance_monitoring(self) -> None:
         """Setup performance monitoring with enhanced callbacks."""
@@ -349,6 +370,10 @@ class MainWindow(QMainWindow):
 
             # Load into navigation controls (Phase 3)
             self.navigation_controls.set_audio_data(self.current_audio_data)
+
+            # Load into audio engine for playback (Critical)
+            self.audio_engine.load_audio(self.current_audio_data)
+            self.transport_bar.set_duration(self.current_audio_data.duration)
 
             # Start beat analysis in background
             self._analyze_beats_async()
@@ -527,6 +552,66 @@ class MainWindow(QMainWindow):
             start_time, end_time = self.waveform_view.get_view_range()
             self.navigation_controls.set_view_range(start_time, end_time)
 
+    # Audio Playback Methods (Critical Implementation)
+    def _play_audio(self) -> None:
+        """Start audio playback."""
+        if not self.current_audio_data:
+            QMessageBox.information(self, "No Audio", "Please load an audio file first.")
+            return
+
+        success = self.audio_engine.play()
+        if not success:
+            QMessageBox.warning(self, "Playback Error", "Failed to start audio playback.")
+            self.logger.error("Failed to start audio playback")
+
+    def _pause_audio(self) -> None:
+        """Pause audio playback."""
+        success = self.audio_engine.pause()
+        if not success:
+            self.logger.error("Failed to pause audio playback")
+
+    def _stop_audio(self) -> None:
+        """Stop audio playback."""
+        success = self.audio_engine.stop()
+        if not success:
+            self.logger.error("Failed to stop audio playback")
+
+    def _seek_audio(self, position_seconds: float) -> None:
+        """Seek to specific position in audio."""
+        success = self.audio_engine.seek(position_seconds)
+        if success:
+            # Update waveform view position
+            self.waveform_view.set_playback_position(position_seconds)
+            self.logger.debug(f"Seeked to {position_seconds:.2f}s")
+        else:
+            self.logger.error(f"Failed to seek to {position_seconds:.2f}s")
+
+    def _set_volume(self, volume: float) -> None:
+        """Set audio playback volume."""
+        self.audio_engine.set_volume(volume)
+        self.logger.debug(f"Volume set to {volume:.2f}")
+
+    def _set_speed(self, speed: float) -> None:
+        """Set audio playback speed."""
+        self.audio_engine.set_speed(speed)
+        self.logger.debug(f"Speed set to {speed:.2f}")
+
+    def _set_audio_device(self, device_id: int) -> None:
+        """Set audio output device."""
+        success = self.audio_engine.set_audio_device(device_id)
+        if not success:
+            QMessageBox.warning(self, "Device Error", "Failed to set audio device.")
+            self.logger.error(f"Failed to set audio device {device_id}")
+
+    def _on_playback_position_changed(self, position: float) -> None:
+        """Handle playback position updates from audio engine."""
+        # Update waveform view
+        self.waveform_view.set_playback_position(position)
+
+        # Update navigation controls
+        if hasattr(self.navigation_controls, 'set_current_position'):
+            self.navigation_controls.set_current_position(position)
+
     def _analyze_beats_async(self) -> None:
         """Analyze beats in background thread."""
         if not self.current_audio_data:
@@ -593,8 +678,8 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "No Audio", "Please load an audio file first.")
             return
 
-        # Get current playback position (for now use 0, will be connected to actual playback)
-        current_position = 0.0  # TODO: Get from actual playback position
+        # Get current playback position from audio engine
+        current_position = self.audio_engine.get_position()
 
         try:
             position_ms = current_position * 1000.0
@@ -622,10 +707,11 @@ class MainWindow(QMainWindow):
         # Clamp position to track duration
         position_seconds = max(0, min(position_seconds, self.current_audio_data.duration))
 
+        # Seek audio engine to position
+        self.audio_engine.seek(position_seconds)
+
         # Update waveform view position
         self.waveform_view.set_playback_position(position_seconds)
-
-        # TODO: Update actual playback position when playback is implemented
 
         self.status_bar.showMessage(f"Jumped to {position_seconds:.2f}s", 1000)
         self.logger.debug(f"Jumped to position {position_seconds:.2f}s")
