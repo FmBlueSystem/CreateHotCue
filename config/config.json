@@ -1,0 +1,174 @@
+{
+  "app": {
+    "name": "CUEpoint",
+    "version": "2.1.0",
+    "window": {
+      "width": 1400,
+      "height": 900,
+      "min_width": 1200,
+      "min_height": 700
+    }
+  },
+  "audio": {
+    "sample_rate": 44100,
+    "buffer_size": 256,
+    "max_latency_ms": 10,
+    "supported_formats": ["mp3", "m4a", "flac", "wav"],
+    "max_file_size_mb": 500,
+    "memory_limit_mb": 100
+  },
+  "waveform": {
+    "theme": "dark",
+    "colors": {
+      "background": "#1A1A1A",
+      "peaks": "#00FF88",
+      "rms": "#004422",
+      "beatgrid": "#FF6B35",
+      "downbeat": "#FF6B35",
+      "cue_colors": ["#FF3366", "#33AAFF", "#FFAA33", "#AA33FF", "#33FF66"]
+    },
+    "zoom": {
+      "min": 1,
+      "max": 128,
+      "default": 4,
+      "smooth_factor": 0.1
+    },
+    "rendering": {
+      "target_fps": 60,
+      "use_opengl": true,
+      "fallback_to_cpu": true,
+      "line_width": 1,
+      "rms_alpha": 0.6
+    },
+    "overlays": {
+      "show_cue_overlays": true,
+      "show_structure_overlays": true,
+      "cue_label_size": 10,
+      "structure_label_size": 9,
+      "overlay_opacity": 0.8
+    }
+  },
+  "beatgrid": {
+    "auto_detect": true,
+    "algorithms": ["madmom_dbn", "aubio_tempo"],
+    "confidence_threshold": 0.8,
+    "bpm_range": [60, 200],
+    "precision_ms": 10
+  },
+  "cues": {
+    "max_cues": 16,
+    "auto_save": true,
+    "backup_on_write": true,
+    "serato_compatibility": true,
+    "formats": ["id3v24", "mp4", "vorbis", "json"],
+    "validation_strict": true,
+    "cache_enabled": true,
+    "batch_operations": true,
+    "conflict_resolution": "merge",
+    "default_colors": [
+      "#FF3366", "#33AAFF", "#FFAA33", "#AA33FF",
+      "#33FF66", "#FF6633", "#3366FF", "#66FF33",
+      "#FF3399", "#33FFAA", "#9933FF", "#FFAA66",
+      "#66AAFF", "#AA66FF", "#FF6699", "#66FFAA"
+    ]
+  },
+  "metadata": {
+    "validation_enabled": true,
+    "cache_enabled": true,
+    "batch_processing": true,
+    "integrity_checks": true,
+    "auto_repair": true,
+    "backup_on_write": true,
+    "preserve_existing": true,
+    "fallback_libraries": ["mutagen", "taglib"],
+    "supported_formats": ["mp3", "m4a", "flac", "ogg"]
+  },
+  "serato": {
+    "strict_validation": true,
+    "auto_repair": true,
+    "version_detection": true,
+    "backup_serato_data": true
+  },
+  "cues": {
+    "max_cues": 16,
+    "auto_save": true,
+    "backup_on_write": true,
+    "serato_compatibility": true,
+    "formats": ["id3v24", "mp4", "vorbis", "json"]
+  },
+  "structure": {
+    "auto_detect": true,
+    "confidence_threshold": 0.7,
+    "min_section_duration": 8.0,
+    "max_sections": 20,
+    "hop_length": 512,
+    "frame_length": 2048,
+    "n_mels": 128,
+    "regions": ["intro", "verse", "chorus", "breakdown", "buildup", "outro"],
+    "colors": {
+      "intro": "#4A90E2",
+      "verse": "#7ED321",
+      "chorus": "#F5A623",
+      "breakdown": "#D0021B",
+      "buildup": "#9013FE",
+      "outro": "#50E3C2"
+    },
+    "feature_weights": {
+      "energy": 0.3,
+      "spectral_centroid": 0.2,
+      "mfcc": 0.25,
+      "chroma": 0.15,
+      "tempo": 0.1
+    }
+  },
+  "ui": {
+    "theme": "dark",
+    "font_family": "SF Pro Display",
+    "font_size": 12,
+    "sidebar_width": 300,
+    "transport_height": 60,
+    "enable_animations": true,
+    "trackpad_gestures": true,
+    "touch_bar_support": true
+  },
+  "keyboard_shortcuts": {
+    "open_file": "Cmd+O",
+    "play_pause": "Space",
+    "cue_1": "Cmd+1",
+    "cue_2": "Cmd+2",
+    "cue_3": "Cmd+3",
+    "cue_4": "Cmd+4",
+    "cue_5": "Cmd+5",
+    "cue_6": "Cmd+6",
+    "cue_7": "Cmd+7",
+    "cue_8": "Cmd+8",
+    "cue_9": "Cmd+9",
+    "zoom_in": "Cmd++",
+    "zoom_out": "Cmd+-",
+    "fit_window": "Cmd+0",
+    "skip_forward": "Cmd+Right",
+    "skip_backward": "Cmd+Left",
+    "fine_forward": "Alt+Right",
+    "fine_backward": "Alt+Left",
+    "save": "Cmd+S",
+    "undo": "Cmd+Z"
+  },
+  "performance": {
+    "enable_profiling": false,
+    "log_fps": false,
+    "memory_monitoring": true,
+    "background_analysis": true,
+    "cache_waveforms": true,
+    "preload_adjacent": false,
+    "advanced_monitoring": true,
+    "sample_interval": 1.0,
+    "memory_tracking": true,
+    "detailed_logging": false
+  },
+  "api": {
+    "enabled": false,
+    "host": "127.0.0.1",
+    "port": 8080,
+    "cors_origins": ["http://localhost:3000"]
+  }
+}
